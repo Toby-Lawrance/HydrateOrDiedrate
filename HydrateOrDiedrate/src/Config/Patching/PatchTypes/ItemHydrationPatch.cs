@@ -17,8 +17,8 @@ public class ItemHydrationPatch : HydrationPatchBase
     public static PatchCollection<ItemHydrationPatch> GenerateDefaultPatchCollection() => new()
     {
         Priority = 5,
-        Patches =
-        [
+        Patches = new ItemHydrationPatch[]
+        {
             new()
             {
                 Code = "game:juiceportion-*",
@@ -2188,6 +2188,6 @@ public class ItemHydrationPatch : HydrationPatchBase
                     ["*"] = 600
                 }
             }
-        ]
+        }
     };
 }

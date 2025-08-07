@@ -1,6 +1,8 @@
-﻿using Vintagestory.API.Common;
+﻿using Vintagestory.API.Client;
+using Vintagestory.API.Common;
+using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
-using Vintagestory.API.Client;
+using Vintagestory.API.Util;
 using Vintagestory.GameContent.Mechanics;
 
 namespace HydrateOrDiedrate.winch;
@@ -59,34 +61,36 @@ public class BlockWinch : BlockMPBase
         return base.OnBlockInteractCancel(secondsUsed, world, byPlayer, blockSel, cancelReason);
     }
 
-    public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer) => selection.SelectionBoxIndex switch
+    public override WorldInteraction[] GetPlacedBlockInteractionHelp(IWorldAccessor world, BlockSelection selection, IPlayer forPlayer)
     {
-        0 => [
-            new WorldInteraction
+        if (selection.SelectionBoxIndex == 0)
+        {
+            return new WorldInteraction[]
             {
-                ActionLangCode = "hydrateordiedrate:blockhelp-winch-addremoveitems",
-                MouseButton = EnumMouseButton.Right
-            },
-            ..base.GetPlacedBlockInteractionHelp(world, selection, forPlayer)
-        ],
-        _ => [
-            new WorldInteraction
-            {
+                new WorldInteraction
+                {
+                    ActionLangCode = Lang.Get("hydrateordiedrate:blockhelp-winch-addremoveitems"),
+                    MouseButton = EnumMouseButton.Right
+                }
+            }.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
+        }
+        return new WorldInteraction[]
+        {
+           new WorldInteraction
+           {
                 ActionLangCode = "hydrateordiedrate:blockhelp-winch-lower",
                 MouseButton = EnumMouseButton.Right,
                 ShouldApply = (wi, bs, es) => world.BlockAccessor.GetBlockEntity(bs.Position) is BlockEntityWinch beWinch && !beWinch.InputSlot.Empty
-            },
-            new WorldInteraction
-            {
-                ActionLangCode = "hydrateordiedrate:blockhelp-winch-raise",
-                MouseButton = EnumMouseButton.Right,
-                HotKeyCode = "sneak",
-                ShouldApply = (wi, bs, es) => world.BlockAccessor.GetBlockEntity(bs.Position) is BlockEntityWinch beWinch && !beWinch.InputSlot.Empty
-            },
-            ..base.GetPlacedBlockInteractionHelp(world, selection, forPlayer)
-        ]
-    };
-
+           },
+           new WorldInteraction
+           {
+               ActionLangCode = "hydrateordiedrate:blockhelp-winch-raise",
+               MouseButton = EnumMouseButton.Right,
+               HotKeyCode = "sneak",
+               ShouldApply = (wi, bs, es) => world.BlockAccessor.GetBlockEntity(bs.Position) is BlockEntityWinch beWinch && !beWinch.InputSlot.Empty
+           }
+        }.Append(base.GetPlacedBlockInteractionHelp(world, selection, forPlayer));
+    }
 
     public override void DidConnectAt(IWorldAccessor world, BlockPos pos, BlockFacing face)
     {

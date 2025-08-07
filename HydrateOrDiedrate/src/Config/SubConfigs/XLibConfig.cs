@@ -10,5 +10,5 @@ public class XLibConfig
     public float DromedaryMultiplierPerLevel { get; set; } = 0.3f;
     
     [JsonProperty(ObjectCreationHandling = ObjectCreationHandling.Replace)]
-    public float[] EquatidianCoolingMultipliers { get; set; } = [1.25f, 1.5f, 2.0f];
+    public float[] EquatidianCoolingMultipliers { get; set; } = new float[] { 1.25f, 1.5f, 2.0f };
 }

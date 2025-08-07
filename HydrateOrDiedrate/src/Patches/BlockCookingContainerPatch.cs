@@ -12,7 +12,7 @@ public static class BlockCookingContainerPatch
     public static bool Prefix(IWorldAccessor world, ISlotProvider cookingSlotsProvider, ItemSlot inputSlot, ItemSlot outputSlot, BlockCookingContainer __instance)
     {
         ItemStack[] stacks = __instance.GetCookingStacks(cookingSlotsProvider, true);
-        CookingRecipe recipe = __instance.GetMatchingCookingRecipe(world, stacks, out var quantityServings);
+        CookingRecipe recipe = __instance.GetMatchingCookingRecipe(world, stacks);
 
         if (recipe == null)
         {
@@ -20,6 +20,7 @@ public static class BlockCookingContainerPatch
         }
         if (recipe.CooksInto?.ResolvedItemstack?.Collectible?.Code?.ToString()?.Contains("hydrateordiedrate:") == true)
         {
+            int quantityServings = recipe.GetQuantityServings(stacks);
             ItemStack resolvedItemstack = recipe.CooksInto.ResolvedItemstack;
             ItemStack outstack = resolvedItemstack?.Clone();
             if (outstack != null)

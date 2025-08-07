@@ -81,15 +81,9 @@ public class HydrateOrDiedrateModSystem : ModSystem
         if (ModConfig.Instance.Thirst.Enabled) HoDbehaviors.Add(new(new JObject { ["code"] =  "thirst" }));
         if (ModConfig.Instance.HeatAndCooling.HarshHeat) HoDbehaviors.Add(new(new JObject { ["code"] =  "bodytemperaturehot" }));
 
-        playerEntity.Server.BehaviorsAsJsonObj = [
-            ..playerEntity.Server.BehaviorsAsJsonObj,
-            ..HoDbehaviors
-        ];
+        playerEntity.Server.BehaviorsAsJsonObj = playerEntity.Server.BehaviorsAsJsonObj.Append(HoDbehaviors.ToArray());
         
-        playerEntity.Client.BehaviorsAsJsonObj = [
-            ..playerEntity.Client.BehaviorsAsJsonObj,
-            ..HoDbehaviors
-        ];
+        playerEntity.Client.BehaviorsAsJsonObj = playerEntity.Client.BehaviorsAsJsonObj.Append(HoDbehaviors.ToArray());
 
         //TODO does this even do anything when HarshHeat is disabled?
         PatchCollection<CoolingPatch>.GetMerged(api, "HoD.AddCooling.json", CoolingPatch.GenerateDefaultPatchCollection()).ApplyPatches(api.World.Items);
@@ -251,7 +245,7 @@ public class HydrateOrDiedrateModSystem : ModSystem
 
     private static void EnsureRainHarvesterBehaviorPresent(Block block)
     {
-        block.BlockEntityBehaviors ??= [];
+        block.BlockEntityBehaviors ??= Array.Empty<BlockEntityBehaviorType>();
 
         if (Array.Exists(block.BlockEntityBehaviors, b => b.Name == "RainHarvester")) return;
         

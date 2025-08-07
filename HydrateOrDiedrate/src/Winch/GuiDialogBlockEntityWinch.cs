@@ -22,7 +22,7 @@ public class GuiDialogBlockEntityWinch : GuiDialogBlockEntity
         ElementBounds inputSlotBounds = ElementStdBounds.SlotGrid(EnumDialogArea.CenterMiddle, 0.0, 15.0, 1, 1);
         ElementBounds bgBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         bgBounds.BothSizing = ElementSizing.FitToChildren;
-        bgBounds.WithChildren([winchBounds]);
+        bgBounds.WithChildren(winchBounds);
 
         ElementBounds dialogBounds = ElementStdBounds.AutosizedMainDialog
             .WithAlignment(EnumDialogArea.CenterMiddle)

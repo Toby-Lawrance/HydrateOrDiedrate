@@ -17,7 +17,7 @@ public static class XLibSkills
 
         if (ModConfig.Instance.Thirst.Enabled)
         {
-            int[] dromedaryValues = [0];
+            int[] dromedaryValues = new int[0];
             Ability dromedaryAbility = new Ability("dromedary", "hydrateordiedrate:ability-dromedary", "hydrateordiedrate:abilitydesc-dromedary", 1, 3, dromedaryValues, false);
             dromedaryAbility.OnPlayerAbilityTierChanged += OnDromedary;
             skill.AddAbility(dromedaryAbility);
@@ -26,7 +26,7 @@ public static class XLibSkills
         //TODO this should be behind equivelant IF statement no?
         //TODO these values should come from Xlevel config not ours
         //TODO these values should be filled so we can use them in the ability description
-        int[] equatidianValues = [0];
+        int[] equatidianValues = new int[0];
         Ability equatidianAbility = new Ability("equatidian", "hydrateordiedrate:ability-equatidian", "hydrateordiedrate:abilitydesc-equatidian", 1, 3, equatidianValues, false);
         equatidianAbility.OnPlayerAbilityTierChanged += OnEquatidian;
         skill.AddAbility(equatidianAbility);

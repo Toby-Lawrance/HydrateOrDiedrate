@@ -34,8 +34,8 @@ public class BlockHydrationPatch : HydrationPatchBase
     public static PatchCollection<BlockHydrationPatch> GenerateDefaultPatchCollection() => new()
     {
         Priority = 5,
-        Patches =
-        [
+        Patches = new BlockHydrationPatch[]
+        {
             new BlockHydrationPatch
             {
                 Code = "boilingwater*",
@@ -108,6 +108,6 @@ public class BlockHydrationPatch : HydrationPatchBase
                 Code = "distilledwater*",
                 Value = 600
             }
-        ]
+        }
     };
 }

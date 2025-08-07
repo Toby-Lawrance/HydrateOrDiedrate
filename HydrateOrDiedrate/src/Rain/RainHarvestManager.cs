@@ -52,8 +52,8 @@ namespace HydrateOrDiedrate
         public RainHarvesterManager(ICoreServerAPI api)
         {
             serverAPI = api;
-            activeHarvesters = [];
-            inactiveHarvestersByChunk = [];
+            activeHarvesters = new Dictionary<BlockPos, RainHarvesterData>();
+            inactiveHarvestersByChunk = new Dictionary<ChunkPos, Dictionary<BlockPos, RainHarvesterData>>();
 
             enableParticleTicking = ModConfig.Instance.Rain.EnableRainGathering;
 
@@ -76,7 +76,7 @@ namespace HydrateOrDiedrate
                 ChunkPos chunkKey = ChunkPos.FromBlockPos(position);
                 if (!inactiveHarvestersByChunk.TryGetValue(chunkKey, out var chunkDict))
                 {
-                    chunkDict = [];
+                    chunkDict = new Dictionary<BlockPos, RainHarvesterData>();
                     inactiveHarvestersByChunk[chunkKey] = chunkDict;
                 }
                 chunkDict[position] = data;

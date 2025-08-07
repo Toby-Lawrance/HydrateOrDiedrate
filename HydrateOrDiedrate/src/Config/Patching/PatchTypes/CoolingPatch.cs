@@ -24,8 +24,8 @@ public class CoolingPatch : PatchBase
     public static PatchCollection<CoolingPatch> GenerateDefaultPatchCollection() => new()
     {
         Priority = 5,
-        Patches =
-        [
+        Patches = new CoolingPatch[]
+        {
             new(){ Code = "game:clothes-upperbody-tattered-crimson-tunic", Value = 1.5f },
             new(){ Code = "game:clothes-upperbody-tattered-linen-shirt", Value = 2f },
             new(){ Code = "game:clothes-upperbody-peasent-shirt", Value = 1.5f },
@@ -513,6 +513,6 @@ public class CoolingPatch : PatchBase
             new(){ Code = "americanfrontiersman:clothes-upperbody-cottonshirttucked", Value = 0.8f },
             new(){ Code = "americanfrontiersman:clothes-upperbodyover-mountaineercoat", Value = 0.2f },
             new(){ Code = "americanfrontiersman:clothes-upperbodyover-mountaineercoatnofringe", Value = 0.2f }
-        ]
+        }
     };
 }

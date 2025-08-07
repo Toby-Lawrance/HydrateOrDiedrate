@@ -136,13 +136,13 @@ public static class WaterPatches
 
     private static void RemoveWaterPerishPatches(ICoreAPI api)
     {
-        string[] jsonFiles =
-        [
+        string[] jsonFiles = new string[]
+        {
             "hydrateordiedrate:itemtypes/liquid/rainwaterportion.json",
             "hydrateordiedrate:itemtypes/liquid/distilledwaterportion.json",
             "hydrateordiedrate:itemtypes/liquid/boiledwaterportion.json",
             "hydrateordiedrate:itemtypes/liquid/boiledrainwaterportion.json"
-        ];
+        };
 
         ModJsonPatchLoader patchLoader = api.ModLoader.GetModSystem<ModJsonPatchLoader>();
         foreach (var jsonFilePath in jsonFiles)

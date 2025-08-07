@@ -307,13 +307,13 @@ namespace HydrateOrDiedrate.wellwater
         private string CheckBaseRingMaterial(IBlockAccessor blockAccessor, BlockPos pos)
         {
             //TODO do more efficient walk
-            Block[] neighbors =
-            [
+            Block[] neighbors = new Block[]
+            {
                 blockAccessor.GetBlock(pos.NorthCopy()),
                 blockAccessor.GetBlock(pos.EastCopy()),
                 blockAccessor.GetBlock(pos.SouthCopy()),
                 blockAccessor.GetBlock(pos.WestCopy())
-            ];
+            };
 
             bool allBrick = Array.TrueForAll(neighbors, b => b?.Code?.Domain == "game" && b.Code.Path.StartsWith("brick"));
             if (allBrick) return "brick";

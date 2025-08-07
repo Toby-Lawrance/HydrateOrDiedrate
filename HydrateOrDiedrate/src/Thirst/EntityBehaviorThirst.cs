@@ -8,9 +8,9 @@ using Vintagestory.API.Datastructures;
 
 namespace HydrateOrDiedrate;
 
-public partial class EntityBehaviorThirst(Entity entity) : EntityBehavior(entity)
+public partial class EntityBehaviorThirst : EntityBehavior
 {
-
+    public EntityBehaviorThirst(Entity entity) : base(entity) { }
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
         base.Initialize(properties, attributes);

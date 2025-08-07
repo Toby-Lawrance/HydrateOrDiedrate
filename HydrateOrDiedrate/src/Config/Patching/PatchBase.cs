@@ -32,7 +32,7 @@ public abstract class PatchBase
                 ValueByType.Remove("*");
             }
 
-            if(ValueByType.Count > 0) CompiledValues = [.. ValueByType.Select(pair =>  (new CollectibleTarget(pair.Key), pair.Value))];
+            if(ValueByType.Count > 0) CompiledValues = ValueByType.Select(pair =>  (new CollectibleTarget(pair.Key), pair.Value)).ToArray();
         }
     }
 

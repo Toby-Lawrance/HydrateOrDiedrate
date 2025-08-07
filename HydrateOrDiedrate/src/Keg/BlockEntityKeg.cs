@@ -1,4 +1,5 @@
 ﻿using HydrateOrDiedrate.Config;
+using System;
 using System.Text;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -32,7 +33,7 @@ public class BlockEntityKeg : BlockEntityLiquidContainer
         //Note: sadly TakeLocked is not fully respected by liquid container code so we still need to overwrite some other methods
         inventory.TakeLocked = !isTapped;
 
-        inventory.TransitionableSpeedMulByType ??= [];
+        inventory.TransitionableSpeedMulByType ??= new System.Collections.Generic.Dictionary<EnumTransitionType, float>();
 
         inventory.TransitionableSpeedMulByType[EnumTransitionType.Perish] = isTapped
             ? ModConfig.Instance.Containers.SpoilRateTapped

@@ -10,7 +10,7 @@ public class PatchCollection<T> where T : PatchBase
 {
     public int Priority { get; set; }
 
-    public T[] Patches { get; set; } = [];
+    public T[] Patches { get; set; } = Array.Empty<T>();
 
     public void ApplyPatches(IEnumerable<CollectibleObject> collectibles)
     {

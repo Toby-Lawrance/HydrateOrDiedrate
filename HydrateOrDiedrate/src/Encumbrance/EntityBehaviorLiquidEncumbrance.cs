@@ -6,8 +6,10 @@ using Vintagestory.GameContent;
 
 namespace HydrateOrDiedrate.encumbrance
 {
-    public class EntityBehaviorLiquidEncumbrance(Entity entity) : EntityBehavior(entity)
+    public class EntityBehaviorLiquidEncumbrance : EntityBehavior
     {
+        public EntityBehaviorLiquidEncumbrance(Entity entity) : base(entity) { }
+
         private int _tickCounter = 0;
         private float _currentPenaltyAmount = 0f;
         private bool _isPenaltyApplied = false;

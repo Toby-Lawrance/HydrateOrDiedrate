@@ -12,8 +12,9 @@ using Vintagestory.GameContent;
 
 namespace HydrateOrDiedrate.Hot_Weather;
 
-public partial class EntityBehaviorBodyTemperatureHot(Entity entity) : EntityBehavior(entity), IThirstRateModifier
+public partial class EntityBehaviorBodyTemperatureHot : EntityBehavior, IThirstRateModifier
 {
+    public EntityBehaviorBodyTemperatureHot(Entity entity) : base(entity) { }
     public override string PropertyName() => "bodytemperaturehot";
     private ITreeAttribute TempTree => entity.WatchedAttributes.GetTreeAttribute(tempTreePath);
     public const string tempTreePath = "bodyTemp";

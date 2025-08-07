@@ -45,7 +45,7 @@ public class BlockKeg : BlockLiquidContainerBase
         if(Code.Path != "kegtapped")
         {
             ItemStack heldItem = byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack;
-            if (heldItem?.Collectible is ItemKegTap && byPlayer.InventoryManager.OffhandTool == EnumTool.Hammer)
+            if (heldItem?.Collectible is ItemKegTap && byPlayer.Entity.LeftHandItemSlot?.Itemstack?.Collectible?.Tool == EnumTool.Hammer)
             {
                 playNextSound = 0.7f;
                 KegAnimations.StartTappingAnimation(byPlayer.Entity.AnimManager);
@@ -80,7 +80,7 @@ public class BlockKeg : BlockLiquidContainerBase
             return secondsUsed < requiredActionTime;
         }
 
-        if (Code.Path != "kegtapped" && byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible is ItemKegTap && byPlayer.InventoryManager.OffhandTool == EnumTool.Hammer)
+        if (Code.Path != "kegtapped" && byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible is ItemKegTap && byPlayer.Entity.LeftHandItemSlot?.Itemstack?.Collectible?.Tool == EnumTool.Hammer)
         {
             if (secondsUsed >= playNextSound)
             {
@@ -110,7 +110,7 @@ public class BlockKeg : BlockLiquidContainerBase
         }
 
         //finish tapping animation
-        if (Code.Path != "kegtapped" && byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible is ItemKegTap && byPlayer.InventoryManager.OffhandTool == EnumTool.Hammer)
+        if (Code.Path != "kegtapped" && byPlayer.InventoryManager.ActiveHotbarSlot?.Itemstack?.Collectible is ItemKegTap && byPlayer.Entity.LeftHandItemSlot?.Itemstack?.Collectible?.Tool == EnumTool.Hammer)
         {
             if(secondsUsed >= requiredActionTime)
             {

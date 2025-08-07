@@ -201,7 +201,7 @@ public class BlockEntityWinch : BlockEntityOpenableContainer
 
     public static BlockPos FindNaturalSourceInLiquidChain(IBlockAccessor blockAccessor, BlockPos pos, HashSet<BlockPos> visited = null)
     {
-        visited ??= [];
+        visited ??= new HashSet<BlockPos>();
         if (visited.Contains(pos)) return null;
         visited.Add(pos);
 
