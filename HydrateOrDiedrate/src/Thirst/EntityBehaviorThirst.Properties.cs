@@ -1,7 +1,10 @@
 ﻿using HydrateOrDiedrate.Config;
+using HydrateOrDiedrate.XSkill;
 using System;
+using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
 using Vintagestory.API.MathTools;
+using XLib.XLeveling;
 
 namespace HydrateOrDiedrate;
 
@@ -18,9 +21,13 @@ public partial class EntityBehaviorThirst
         get => ThirstTree.TryGetFloat("maxThirst") ?? ModConfig.Instance.Thirst.MaxThirst;
         set
         {
-            if(!float.IsFinite(value) || value == MaxThirst) return;
-            ThirstTree.SetFloat("maxThirst", value); //TODO should we not do something with CurrentThirst here?
+            var currentMaxThirst = MaxThirst;
+            if (!float.IsFinite(value) || value == currentMaxThirst) return;
+
+            ThirstTree.SetFloat("maxThirst", value);
             entity.WatchedAttributes.MarkPathDirty(thirstTreePath);
+
+            CurrentThirst = (CurrentThirst / currentMaxThirst) * value; // adjust current thirst relative to the new max thirst
         }
     }
 
@@ -130,5 +137,17 @@ public partial class EntityBehaviorThirst
             entity.WatchedAttributes.SetAttribute(thirstTreePath, new TreeAttribute());
             MapLegacyData();
         }
+
+        if(!XLibSkills.Enabled) RecalculateMaxThirst();
+    }
+
+    public void RecalculateMaxThirst()
+    {
+        if(entity.Api.Side != EnumAppSide.Server) return;
+        var newMaxThirst = ModConfig.Instance.Thirst.MaxThirst;
+
+        if(XLibSkills.Enabled) newMaxThirst *= XLibSkills.GetDromedaryModifier(entity.Api, (entity as EntityPlayer)?.Player);
+
+        MaxThirst = newMaxThirst;
     }
 }

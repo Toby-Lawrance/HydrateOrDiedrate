@@ -16,35 +16,11 @@ public partial class EntityBehaviorBodyTemperatureHot : EntityBehavior, IThirstR
 {
     public EntityBehaviorBodyTemperatureHot(Entity entity) : base(entity) { }
     public override string PropertyName() => "bodytemperaturehot";
-    private ITreeAttribute TempTree => entity.WatchedAttributes.GetTreeAttribute(tempTreePath);
-    public const string tempTreePath = "bodyTemp";
-
-    public float EquatidianAbilityCoolingMultiplier { get; internal set; } = 1f;
-
-    public float Cooling
-    {
-        get => TempTree.GetFloat("cooling");
-        set
-        {
-            var safeValue = GameMath.Clamp(value.GuardFinite(), 0, float.MaxValue);
-            if(safeValue == Cooling) return;
-
-            TempTree.SetFloat("cooling", safeValue);
-            entity.WatchedAttributes.MarkPathDirty(tempTreePath);
-        }
-    }
-
-    private void MapLegacyData()
-    {
-        var attr = entity.WatchedAttributes;
-        attr.RemoveAttribute("currentCoolingHot");
-        attr.RemoveAttribute("adjustedCoolingHot");
-    }
 
     public override void Initialize(EntityProperties properties, JsonObject attributes)
     {
         base.Initialize(properties, attributes);
-        MapLegacyData();
+        InitBodyHeatAttributes();
     }
 
     public float OnThirstRateCalculate(float currentModifier)
@@ -123,7 +99,7 @@ public partial class EntityBehaviorBodyTemperatureHot : EntityBehavior, IThirstR
         double diurnalCooling = (0.5 - distanceTo4AM - distanceTo3PM) * config.DiurnalVariationAmplitude;
         finalCooling += (float)(sunlightCooling + diurnalCooling);
         
-        Cooling = Math.Max(0, Util.GuardFinite(finalCooling * EquatidianAbilityCoolingMultiplier));
+        Cooling = Math.Max(0, Util.GuardFinite(finalCooling * CoolingMultiplier));
     }
 
     private bool inEnclosedRoom;
