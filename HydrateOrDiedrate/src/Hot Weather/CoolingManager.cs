@@ -14,7 +14,6 @@ public static class CoolingManager
         var attributes = itemStack?.Collectible.Attributes;
         if (attributes is null) return 0f;
 
-        float maxCooling = attributes.Token.Value<float>(Attributes.Cooling);
-        return float.IsNaN(maxCooling) ? 0f : maxCooling;
+        return attributes.Token.Value<float>(Attributes.Cooling).GuardFinite();
     }
 }

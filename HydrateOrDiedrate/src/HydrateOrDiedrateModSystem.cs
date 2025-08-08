@@ -16,11 +16,13 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
-using System.Diagnostics;
 using HydrateOrDiedrate.Config.Patching;
 using HydrateOrDiedrate.Config.Patching.PatchTypes;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Util;
+using System.Collections.Generic;
+using Vintagestory.API.Datastructures;
+using Newtonsoft.Json.Linq;
 
 namespace HydrateOrDiedrate;
 
@@ -37,8 +39,6 @@ public class HydrateOrDiedrateModSystem : ModSystem
     private WaterInteractionHandler _waterInteractionHandler;
     private Harmony harmony;
     public static AquiferManager AquiferManager { get; private set; }
-
-    private XLibSkills xLibSkills;
 
     private RainHarvesterManager rainHarvesterManager;
     private DrinkHudOverlayRenderer hudOverlayRenderer;
@@ -72,7 +72,26 @@ public class HydrateOrDiedrateModSystem : ModSystem
     {
         base.AssetsFinalize(api);
         if(api.Side == EnumAppSide.Client) return; //This data is decided by the server and synced over to client automatically
+        
+        EntityProperties playerEntity = api.World.GetEntityType(new AssetLocation("game", "player"));
+        var HoDbehaviors = new List<JsonObject>(3);
 
+        //Forcibly insert behaviors to ensure they are present //TODO most of these are only really needed for th server but some are on client as well for now for accessibility
+        if (ModConfig.Instance.LiquidEncumbrance.Enabled) HoDbehaviors.Add(new(new JObject { ["code"] =  "liquidencumbrance" }));
+        if (ModConfig.Instance.Thirst.Enabled) HoDbehaviors.Add(new(new JObject { ["code"] =  "thirst" }));
+        if (ModConfig.Instance.HeatAndCooling.HarshHeat) HoDbehaviors.Add(new(new JObject { ["code"] =  "bodytemperaturehot" }));
+
+        playerEntity.Server.BehaviorsAsJsonObj = [
+            ..playerEntity.Server.BehaviorsAsJsonObj,
+            ..HoDbehaviors
+        ];
+        
+        playerEntity.Client.BehaviorsAsJsonObj = [
+            ..playerEntity.Client.BehaviorsAsJsonObj,
+            ..HoDbehaviors
+        ];
+
+        //TODO does this even do anything when HarshHeat is disabled?
         PatchCollection<CoolingPatch>.GetMerged(api, "HoD.AddCooling.json", CoolingPatch.GenerateDefaultPatchCollection()).ApplyPatches(api.World.Items);
 
         if (ModConfig.Instance.Thirst.Enabled)
@@ -94,33 +113,36 @@ public class HydrateOrDiedrateModSystem : ModSystem
     public override void Start(ICoreAPI api)
     {
         base.Start(api);
-        api.RegisterEntityBehaviorClass("bodytemperaturehot", typeof(EntityBehaviorBodyTemperatureHot));
-        api.RegisterEntityBehaviorClass("liquidencumbrance", typeof(EntityBehaviorLiquidEncumbrance));
+        
         api.RegisterBlockClass("BlockKeg", typeof(BlockKeg));
         api.RegisterBlockEntityClass("BlockEntityKeg", typeof(BlockEntityKeg));
         api.RegisterItemClass("ItemKegTap", typeof(ItemKegTap));
-        api.RegisterCollectibleBehaviorClass("BehaviorPickaxeWellMode", typeof(BehaviorPickaxeWellMode));
-        api.RegisterCollectibleBehaviorClass("BehaviorShovelWellMode", typeof(BehaviorShovelWellMode));
+        
         api.RegisterBlockClass("BlockTun", typeof(BlockTun));
         api.RegisterBlockEntityClass("BlockEntityTun", typeof(BlockEntityTun));
+        
+        api.RegisterCollectibleBehaviorClass("BehaviorPickaxeWellMode", typeof(BehaviorPickaxeWellMode));
+        api.RegisterCollectibleBehaviorClass("BehaviorShovelWellMode", typeof(BehaviorShovelWellMode));
+
         api.RegisterBlockEntityClass("BlockEntityWellWaterData", typeof(BlockEntityWellWaterData));
         api.RegisterBlockBehaviorClass("BlockBehaviorWellWaterFinite", typeof(BlockBehaviorWellWaterFinite));
         api.RegisterBlockClass("BlockWellSpring", typeof(BlockWellSpring));
         api.RegisterBlockEntityClass("BlockEntityWellSpring", typeof(BlockEntityWellSpring));
+        
         api.RegisterBlockClass("BlockWinch", typeof(BlockWinch));
         api.RegisterBlockEntityClass("BlockEntityWinch", typeof(BlockEntityWinch));
 
-        if (ModConfig.Instance.Thirst.Enabled)
-        {
-            api.RegisterEntityBehaviorClass("thirst", typeof(EntityBehaviorThirst));
-        }
+        if (ModConfig.Instance.LiquidEncumbrance.Enabled) api.RegisterEntityBehaviorClass("liquidencumbrance", typeof(EntityBehaviorLiquidEncumbrance));
+        if (ModConfig.Instance.Thirst.Enabled) api.RegisterEntityBehaviorClass("thirst", typeof(EntityBehaviorThirst));
+        if (ModConfig.Instance.HeatAndCooling.HarshHeat) api.RegisterEntityBehaviorClass("bodytemperaturehot", typeof(EntityBehaviorBodyTemperatureHot)); //TODO does this even do anything when thirst is disabled?
 
         _waterInteractionHandler = new WaterInteractionHandler(api);
 
+        XLibSkills.Enabled = false;
         if (api.ModLoader.IsModEnabled("xlib") || api.ModLoader.IsModEnabled("xlibpatch"))
         {
-            xLibSkills = new XLibSkills();
-            xLibSkills.Initialize(api);
+            XLibSkills.Initialize(api);
+            XLibSkills.Enabled = true;
         }
 
         api.RegisterBlockEntityBehaviorClass("RainHarvester", typeof(RegisterRainHarvester));
@@ -148,8 +170,6 @@ public class HydrateOrDiedrateModSystem : ModSystem
         AquiferManager = new AquiferManager(api);
         _waterInteractionHandler.Initialize(serverChannel);
         rainHarvesterManager = new RainHarvesterManager(_serverApi);
-        api.Event.PlayerNowPlaying += OnPlayerNowPlaying;
-        api.Event.PlayerRespawn += OnPlayerRespawn;
         api.Event.PlayerDisconnect += _waterInteractionHandler.OnPlayerDisconnect;
         api.Event.RegisterGameTickListener(CheckPlayerInteraction, 100);
 
@@ -173,22 +193,15 @@ public class HydrateOrDiedrateModSystem : ModSystem
         if (ModConfig.Instance.Thirst.Enabled)
         {
             customHudListenerId = api.Event.RegisterGameTickListener(CheckAndInitializeCustomHud, 20);
-            api.Event.OnEntitySpawn += (spawnedEntity) =>
-            {
-                if (spawnedEntity is EntityPlayer playerEntity &&
-                    playerEntity.PlayerUID == api.World.Player?.PlayerUID &&
-                    playerEntity.GetBehavior<EntityBehaviorThirst>() == null)
-                {
-                    playerEntity.AddBehavior(new EntityBehaviorThirst(playerEntity));
-                }
-            };
         }
         if(api.ModLoader.IsModEnabled("configlib")) ConfigLibCompatibility.Init(api);
     }
+
     public RainHarvesterManager GetRainHarvesterManager()
     {
         return rainHarvesterManager;
     }
+
     private void OnDrinkProgressReceived(DrinkProgressPacket msg)
     {
         if (hudOverlayRenderer == null) return;
@@ -196,6 +209,7 @@ public class HydrateOrDiedrateModSystem : ModSystem
     }
 
 
+    //TODO: there should be a better way to do this, no?
     private void CheckAndInitializeCustomHud(float dt)
     {
         var vanillaHudStatbar = GetVanillaStatbarHud();
@@ -236,54 +250,6 @@ public class HydrateOrDiedrateModSystem : ModSystem
             _waterInteractionHandler.CheckShiftRightClickBeforeInteractionForPlayer(dt, player);
         }
     }
-    private void OnPlayerNowPlaying(IServerPlayer byPlayer)
-    {
-        var entity = byPlayer.Entity;
-        if (entity == null) return;
-
-        var bodyTemperatureHotBehavior = entity.GetBehavior<EntityBehaviorBodyTemperatureHot>();
-        if (bodyTemperatureHotBehavior == null)
-        {
-            bodyTemperatureHotBehavior = new EntityBehaviorBodyTemperatureHot(entity);
-            entity.AddBehavior(bodyTemperatureHotBehavior);
-        }
-
-        var liquidEncumbranceBehavior = entity.GetBehavior<EntityBehaviorLiquidEncumbrance>();
-        if (liquidEncumbranceBehavior == null)
-        {
-            liquidEncumbranceBehavior = new EntityBehaviorLiquidEncumbrance(entity);
-            entity.AddBehavior(liquidEncumbranceBehavior);
-        }
-
-        if (ModConfig.Instance.Thirst.Enabled)
-        {
-            var thirstBehavior = entity.GetBehavior<EntityBehaviorThirst>();
-            if (thirstBehavior == null)
-            {
-                thirstBehavior = new EntityBehaviorThirst(entity);
-                entity.AddBehavior(thirstBehavior);
-            }
-            if (!entity.WatchedAttributes.HasAttribute("currentThirst"))
-            {
-                thirstBehavior.CurrentThirst = thirstBehavior.MaxThirst;
-                thirstBehavior.MovementPenalty = 0f; 
-            }
-            bool dromedaryActive = entity.WatchedAttributes.GetBool("dromedaryActive", false);
-            if (!dromedaryActive)
-            {
-                float defaultMaxThirst = ModConfig.Instance.Thirst.MaxThirst;
-                thirstBehavior.CurrentThirst = thirstBehavior.CurrentThirst / thirstBehavior.MaxThirst * defaultMaxThirst;
-                thirstBehavior.MaxThirst = defaultMaxThirst;
-            }
-        }
-    }
-    private void OnPlayerRespawn(IServerPlayer byPlayer)
-    {
-        if (byPlayer.Entity is null || !ModConfig.Instance.Thirst.Enabled) return;
-
-        var thirstBehavior = byPlayer.Entity.GetBehavior<EntityBehaviorThirst>();
-        thirstBehavior.OnRespawn();
-    }
 
     private static void EnsureRainHarvesterBehaviorPresent(Block block)
     {
@@ -291,7 +257,7 @@ public class HydrateOrDiedrateModSystem : ModSystem
 
         if (Array.Exists(block.BlockEntityBehaviors, b => b.Name == "RainHarvester")) return;
         
-        block.BlockEntityBehaviors = block.BlockEntityBehaviors.Append(new BlockEntityBehaviorType()
+        block.BlockEntityBehaviors = block.BlockEntityBehaviors.Append(new BlockEntityBehaviorType
         {
             Name = "RainHarvester",
             properties = null
@@ -307,8 +273,12 @@ public class HydrateOrDiedrateModSystem : ModSystem
     }
     public override void Dispose()
     {
+        _thirstHud?.Dispose();
+        _hungerReductionHud?.Dispose();
+        
         ConfigManager.UnloadModConfig();
         harmony?.UnpatchAll(HarmonyID);
+
         base.Dispose();
     }
 }

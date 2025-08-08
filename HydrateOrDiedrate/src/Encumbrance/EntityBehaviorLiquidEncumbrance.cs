@@ -12,6 +12,7 @@ namespace HydrateOrDiedrate.encumbrance
         private float _currentPenaltyAmount = 0f;
         private bool _isPenaltyApplied = false;
 
+        //TODO why not just bind on inventory slot changes?
         public override void OnGameTick(float deltaTime)
         {
             if (!entity.Alive || entity is not EntityPlayer player) return;

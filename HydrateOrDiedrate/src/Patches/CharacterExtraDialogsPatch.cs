@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using HydrateOrDiedrate.Config;
+using HydrateOrDiedrate.Hot_Weather;
 using Vintagestory.API.Client;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
@@ -25,11 +26,11 @@ namespace HydrateOrDiedrate.patches
         private class CachedUIElements
         {
             public GuiComposer composer;
-            public dynamic thirstDynamicText;
-            public dynamic thirstRateDynamicText;
-            public dynamic nutritionDeficitDynamicText;
-            public dynamic currentCoolingDynamicText;
-            public dynamic hydrationDelayDynamicText;
+            public GuiElementDynamicText thirstDynamicText;
+            public GuiElementDynamicText thirstRateDynamicText;
+            public GuiElementDynamicText nutritionDeficitDynamicText;
+            public GuiElementDynamicText currentCoolingDynamicText;
+            public GuiElementDynamicText hydrationDelayDynamicText;
         }
 
         private static bool ShouldSkipPatch() => !ModConfig.Instance.Thirst.Enabled;
@@ -208,6 +209,7 @@ namespace HydrateOrDiedrate.patches
             cachedUIElements[__instance] = cached;
             UpdateDynamicTexts(__instance, cached);
         }
+
         private static void UpdateDynamicTexts(object __instance, CachedUIElements cached)
         {
             Type type = __instance.GetType();
@@ -216,41 +218,32 @@ namespace HydrateOrDiedrate.patches
             ICoreClientAPI capi = (ICoreClientAPI)capiField.GetValue(__instance);
 
             var entity = capi.World.Player.Entity;
+            var thirstBehavior = entity.GetBehavior<EntityBehaviorThirst>();
+            var tempBehavior = entity.GetBehavior<EntityBehaviorBodyTemperatureHot>();
 
-            float currentThirst = entity.WatchedAttributes.GetFloat("currentThirst", 0f);
-            float maxThirst = entity.WatchedAttributes.GetFloat("maxThirst", 1500f);
+            float currentThirst = thirstBehavior.CurrentThirst;
+            float maxThirst = thirstBehavior.MaxThirst;
             
             cached.thirstDynamicText?.SetNewText($"{(int)currentThirst} / {(int)maxThirst}", false, false, false);
             
-            float currentThirstRate = entity.WatchedAttributes.GetFloat("thirstRate", 0.01f);
+            float currentThirstRate = thirstBehavior.ThirstRate;
 
-            float currentSpeedOfTime = capi.World.Calendar?.SpeedOfTime ?? 60f;
-            float currentCalendarSpeedMul = capi.World.Calendar?.CalendarSpeedMul ?? 0.5f;
-            float multiplierPerGameSec = (currentSpeedOfTime / 60f) * (currentCalendarSpeedMul / 0.5f);
-            float normalizedThirstRate = currentThirstRate / multiplierPerGameSec;
-            float thirstRatePercentage = (normalizedThirstRate / ModConfig.Instance.Thirst.ThirstDecayRate) * 100;
+            float thirstRatePercentage = (currentThirstRate / ModConfig.Instance.Thirst.ThirstDecayRate) * 100;
             thirstRatePercentage = Math.Max(0, thirstRatePercentage);
-            if (cached.thirstRateDynamicText != null)
-            {
-                cached.thirstRateDynamicText.SetNewText($"{(int)thirstRatePercentage}%", false, false, false);
-            }
-            float hungerReductionAmount = entity.WatchedAttributes.GetFloat("hungerReductionAmount", 0f);
-            if (cached.nutritionDeficitDynamicText != null)
-            {
-                cached.nutritionDeficitDynamicText.SetNewText($"{hungerReductionAmount}", false, false, false);
-            }
-            float rawCoolingValue = entity.WatchedAttributes.GetFloat("currentCoolingHot", 0f);
-            if (cached.currentCoolingDynamicText != null)
-            {
-                cached.currentCoolingDynamicText.SetNewText($"{rawCoolingValue:0.##}", false, false, false);
-            }
-            int hydrationDelay = entity.WatchedAttributes.GetInt("hydrationLossDelay");
-            TimeSpan delayTime = TimeSpan.FromSeconds(hydrationDelay);
-            string formattedDelay = $"{delayTime.Hours:D2}:{delayTime.Minutes:D2}:{delayTime.Seconds:D2}";
-            if (cached.hydrationDelayDynamicText != null)
-            {
-                cached.hydrationDelayDynamicText.SetNewText(formattedDelay, false, false, false);
-            }
+
+            cached.thirstRateDynamicText?.SetNewText($"{(int)thirstRatePercentage}%", false, false, false);
+            
+            float hungerReductionAmount = thirstBehavior.HungerReductionAmount;
+            
+            cached.nutritionDeficitDynamicText?.SetNewText($"{hungerReductionAmount}", false, false, false);
+            
+            float rawCoolingValue = tempBehavior.Cooling;
+            
+            cached.currentCoolingDynamicText?.SetNewText($"{rawCoolingValue:0.##}", false, false, false);
+            
+            TimeSpan delayTime = TimeSpan.FromSeconds(thirstBehavior.HydrationLossDelay);
+            
+            cached.hydrationDelayDynamicText?.SetNewText(delayTime.ToString(@"hh\:mm\:ss"), false, false, false);
         }
 
         [HarmonyPatch("UpdateStats")]

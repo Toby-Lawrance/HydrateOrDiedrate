@@ -56,6 +56,15 @@ public class ThirstConfig
     [Range(1d, double.PositiveInfinity)]
     [DefaultValue(1.5d)]
     public float SprintThirstMultiplier { get; set; } = 1.5f;
+    
+    /// <summary>
+    /// Multiplier for thirst decay when the player is idle.
+    /// </summary>
+    [Category("Thirst Decay")]
+    [DisplayFormat(DataFormatString = "P")]
+    [Range(0.01d, 1d)]
+    [DefaultValue(0.25f)]
+    public float IdleThirstModifier { get; set; } = 0.25f;
 
     /// <summary>
     /// Damage dealt to the player each interval once fully dehydrated
@@ -86,9 +95,20 @@ public class ThirstConfig
 
     /// <summary>
     /// From which thirst level the player starts getting a movement speed penalty.
+    /// Set to -1 to disable the movement speed penalty entirely.
     /// (penalty will increase gradually as hydration drops even further)
     /// </summary>
     [Category("Penalty")]
-    [Range(0d, 10000d)] //TODO: should probably be a percentage of MaxThirst so you can't just forget about and have it always be active because you lowered max thirst
+    [Range(-1d, 10000d)] //TODO: should probably be a percentage of MaxThirst so you can't just forget about and have it always be active because you lowered max thirst
+    [DefaultValue(600f)]
     public float MovementSpeedPenaltyThreshold { get; set; } = 600f;
+
+    /// <summary>
+    /// Percentage of the thirst gauge that will be filled after the player respawns.
+    /// </summary>
+    [Category("Penalty")]
+    [DisplayFormat(DataFormatString = "P")]
+    [Range(0d, 1d)]
+    [DefaultValue(0.5f)]
+    public float ThirstPercentageOnRespawn { get; set; } = 0.5f;
 }

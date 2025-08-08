@@ -12,24 +12,24 @@ namespace HydrateOrDiedrate.HUD
         private float flashTimer = 0f;
 
         public override double InputOrder => 1.05;
-
+        
+        private readonly EntityBehaviorThirst thirstBehavior;
         public HudElementHungerReductionBar(ICoreClientAPI capi) : base(capi)
         {
+            thirstBehavior = capi.World.Player.Entity.GetBehavior<EntityBehaviorThirst>();
             ComposeGuis();
             capi.Event.RegisterGameTickListener(OnGameTick, 1000);
         }
 
         public void OnGameTick(float dt)
         {
-            var player = capi.World.Player.Entity as EntityPlayer;
-            if (player == null) return;
-            ITreeAttribute hungerTree = player.WatchedAttributes.GetTreeAttribute("hunger");
+            ITreeAttribute hungerTree = capi.World.Player.Entity.WatchedAttributes.GetTreeAttribute("hunger");
             if (hungerTree == null) return;
-            UpdateHungerReduction(player, hungerTree);
+            UpdateHungerReduction(capi.World.Player.Entity, hungerTree);
             flashTimer += dt;
             if (flashTimer >= 2.5f)
             {
-                UpdateFlashState(player, hungerTree);
+                UpdateFlashState(capi.World.Player.Entity, hungerTree);
                 flashTimer = 0f;
             }
         }
@@ -37,13 +37,6 @@ namespace HydrateOrDiedrate.HUD
         private void UpdateFlashState(EntityPlayer player, ITreeAttribute hungerTree)
         {
             if (_statbar == null) return;
-
-            var thirstBehavior = player?.GetBehavior<EntityBehaviorThirst>();
-            if (thirstBehavior == null)
-            {
-                _statbar.CustomShouldFlash = false;
-                return;
-            }
 
             float hungerReductionAmount = thirstBehavior.HungerReductionAmount;
             float currentSaturation = hungerTree.GetFloat("currentsaturation");
@@ -63,7 +56,7 @@ namespace HydrateOrDiedrate.HUD
         {
             if (_statbar == null) return;
 
-            float hungerReductionAmount = player.WatchedAttributes.GetFloat("hungerReductionAmount", 0f);
+            float hungerReductionAmount = thirstBehavior.HungerReductionAmount;
             float currentSaturation = hungerTree.GetFloat("currentsaturation");
             float maxSaturation = hungerTree.GetFloat("maxsaturation");
             float displayValue = Math.Min(hungerReductionAmount, currentSaturation);
@@ -109,11 +102,10 @@ namespace HydrateOrDiedrate.HUD
         public override void OnOwnPlayerDataReceived()
         {
             ComposeGuis();
-            var player = capi.World.Player.Entity as EntityPlayer;
-            if (player != null)
+            if (capi.World.Player.Entity is EntityPlayer player)
             {
                 ITreeAttribute hungerTree = player.WatchedAttributes.GetTreeAttribute("hunger");
-                if (hungerTree != null)
+                if (hungerTree is not null)
                 {
                     UpdateHungerReduction(player, hungerTree);
                 }

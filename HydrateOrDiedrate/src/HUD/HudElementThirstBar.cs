@@ -17,19 +17,19 @@ public class HudElementThirstBar : HudElement
     public bool ShowThirstBar = true;
     public override double InputOrder => 1.0;
     
+    private readonly EntityBehaviorThirst thirstBehavior;
+
     public HudElementThirstBar(ICoreClientAPI capi) : base(capi)
     {
+        thirstBehavior = capi.World.Player.Entity.GetBehavior<EntityBehaviorThirst>();
+        
         ComposeGuis();
-        capi.Event.RegisterGameTickListener(OnGameTick, 100);
+        capi.Event.RegisterGameTickListener(OnGameTick, 100); //TODO: thirst is only updated every 10 seconds so is there a point in this being every 100ms?
     }
 
     public void OnGameTick(float dt)
     {
-        if (!ModConfig.Instance.Thirst.Enabled ||
-            capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Spectator)
-        {
-            return;
-        }
+        if (!ModConfig.Instance.Thirst.Enabled || capi.World.Player.WorldData.CurrentGameMode == EnumGameMode.Spectator) return;
 
         UpdateThirst();
         
@@ -61,8 +61,8 @@ public class HudElementThirstBar : HudElement
     {
         if (_statbar == null) return;
 
-        var currentThirst = capi.World.Player.Entity.WatchedAttributes.GetFloat("currentThirst");
-        var maxThirst = capi.World.Player.Entity.WatchedAttributes.GetFloat("maxThirst");
+        var currentThirst = thirstBehavior.CurrentThirst;
+        var maxThirst = thirstBehavior.MaxThirst;
 
         if (currentThirst != _lastCurrentThirst || maxThirst != _lastMaxThirst)
         {
